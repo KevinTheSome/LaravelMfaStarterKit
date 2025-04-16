@@ -1,19 +1,21 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'make products',
-        href: '/products/create',
+        title: 'Edit products',
+        href: '/products/edit',
     },
 ];
 
 export default function Dashboard() {
+    const { product } = usePage().props;
     const [values, setValues] = useState({
-        name: '',
-        Description: '',
+        name: product.name,
+        Description: product.Description,
+        id: product.id,
     });
 
     function handleChange(e: any) {
@@ -28,7 +30,7 @@ export default function Dashboard() {
     function handleSubmit(e: any) {
         e.preventDefault();
         console.log(values);
-        router.post('/products/store', values);
+        router.post('/products/update/${product.id}', values);
     }
 
     return (

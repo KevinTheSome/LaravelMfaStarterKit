@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -22,6 +23,10 @@ class ProductController extends Controller
      */
     public function create()
     {
+        // dd(auth::user()->role);
+        if(auth::user()->role != "admin" && auth::user()->role != "editor") {
+            return to_route('dashboard');
+        }
         return Inertia::render('Products/Create');
     }
 
@@ -30,14 +35,17 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        if(auth::user()->role != 'admin' && auth::user()->role != 'editor') {
+            return to_route('dashboard');
+        }
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'numeric'],
+            'Description' => ['required', 'string', 'max:255', 'min:0'],
         ]);
 
         $product = new Product();
         $product->name = $request->name;
-        $product->price = $request->price;
+        $product->Description = $request->Description;
         $product->save();
 
         return to_route('products.index');
@@ -46,30 +54,40 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Product $product) {}
+    public function show($id) {
+        $product = Product::find($id);
+        return Inertia::render('Products/View', ['product' => $product]);
+    }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Product $product)
+    public function edit($id)
     {
-        $product = Product::find($product->id);
-        return Inertia::render('Product/Edit', ['product' => $product]);
+        if(auth::user()->role != 'admin' && auth::user()->role != 'editor') {
+            return to_route('dashboard');
+        }
+        $product = Product::find($id);
+        return Inertia::render('Products/Edit', ['product' => $product]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request)
     {
+        if(auth::user()->role != 'admin' && auth::user()->role != 'editor') {
+            return to_route('dashboard');
+        }
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'numeric'],
+            'Description' => ['required', 'string'],
+            'id' => ['required', 'numeric', 'exists:products,id'],
         ]);
 
-        $product = Product::find($product->id);
+        $product = Product::find($request->id);
         $product->name = $request->name;
-        $product->price = $request->price;
+        $product->Description = $request->Description;
         $product->save();
 
         return to_route('products.index');
@@ -78,8 +96,13 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Product $product)
+    public function destroy($id)
     {
-        //
+        if(auth::user()->role != 'admin') {
+            return to_route('dashboard');
+        }
+        $product = Product::find($id);
+        $product->delete();
+        return to_route('products.index');
     }
 }
